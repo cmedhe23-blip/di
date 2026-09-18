@@ -1225,6 +1225,7 @@ export function BirthdayJourney() {
   const [announcement, setAnnouncement] = useState("");
   const audio = useRef<HTMLAudioElement>(null);
   const touch = useRef(0);
+  const touchX = useRef(0);
   const wheel = useRef(0);
 
   // Focus trap for modals
@@ -1430,11 +1431,24 @@ export function BirthdayJourney() {
     <main
       className="journey"
       onWheel={onWheel}
-      onTouchStart={(e) => (touch.current = e.touches[0]?.clientY ?? 0)}
+      onTouchStart={(e) => {
+        touch.current = e.touches[0]?.clientY ?? 0;
+        touchX.current = e.touches[0]?.clientX ?? 0;
+      }}
       onTouchEnd={(e) => {
         const y = e.changedTouches[0]?.clientY ?? touch.current;
-        const diff = touch.current - y;
-        if (Math.abs(diff) > 80) (diff > 0 ? next : prev)();
+        const x = e.changedTouches[0]?.clientX ?? touchX.current;
+        const diffY = touch.current - y;
+        const diffX = touchX.current - x;
+        
+        // Check vertical swipe (up/down)
+        if (Math.abs(diffY) > 50 && Math.abs(diffY) > Math.abs(diffX)) {
+          (diffY > 0 ? next : prev)();
+        }
+        // Check horizontal swipe (left/right)
+        else if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+          (diffX > 0 ? next : prev)();
+        }
       }}
       role="application"
       aria-label="Interactive birthday journey experience"
@@ -1579,13 +1593,19 @@ export function BirthdayJourney() {
         </Button>
       </motion.footer>
 
-      {/* Mobile Page Indicator - Only visible on mobile */}
+      {/* Mobile Page Indicator - Clickable dots */}
       <div className="page-indicator-mobile">
         {Array.from({ length: 12 }, (_, i) => (
-          <div
+          <button
             key={i}
             className={`page-dot ${i === scene ? 'active' : ''}`}
-            aria-hidden="true"
+            onClick={() => {
+              setScene(i);
+              sound.playButtonSound("chime");
+              setAnnouncement(`Jumped to scene ${i + 1}: ${scenes[i]}`);
+            }}
+            aria-label={`Jump to scene ${i + 1}: ${scenes[i]}`}
+            disabled={i === scene}
           />
         ))}
         <span className="page-number">{scene + 1}/12</span>
