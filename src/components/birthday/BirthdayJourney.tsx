@@ -181,8 +181,23 @@ function Lock({ next }: { next: () => void }) {
           />
           <div className="unlock-flare" />
           {!open && (
-            <div className="chest-hint-badge">
-              <Sparkles size={13} className="text-amber-300" />
+            <div 
+              className="chest-hint-badge"
+              onClick={(e) => {
+                e.stopPropagation();
+                unseal();
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Tap to open the celestial chest"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  unseal();
+                }
+              }}
+            >
+              <Sparkles size={16} className="text-amber-300" />
               <span>Tap Chest to Open</span>
             </div>
           )}
@@ -1473,20 +1488,14 @@ export function BirthdayJourney() {
         animate={{ opacity: videoPlaying ? 0 : 1, pointerEvents: videoPlaying ? 'none' : 'auto' }}
         transition={{ duration: 0.4 }}
       >
-        <button
+        <div
           className="scene-name"
-          onClick={() => {
-            sound.playButtonSound("glass");
-            setDrawerOpen(true);
-            setAnnouncement("Opened constellation map. Choose a scene to jump to.");
-          }}
-          title="Open scene constellation map"
-          aria-label="Open scene constellation map"
+          aria-label={`Scene ${scene + 1}: ${scenes[scene]}`}
         >
           <Compass size={14} className="text-amber-300" />
           <span>{String(scene + 1).padStart(2, "0")}</span>
-          {scenes[scene]}
-        </button>
+          <span className="hidden sm:inline">{scenes[scene]}</span>
+        </div>
 
         <div className="flex items-center gap-2">
           <Button
@@ -1498,7 +1507,7 @@ export function BirthdayJourney() {
               setAnnouncement("Opened customization panel. Edit story details.");
             }}
             tooltip="Personalize names & story details"
-            className="text-xs"
+            className="text-xs customize-btn"
           >
             <Sliders size={13} />
             <span>Customize</span>
@@ -1569,6 +1578,26 @@ export function BirthdayJourney() {
           <ArrowRight />
         </Button>
       </motion.footer>
+
+      {/* Mobile Page Indicator - Only visible on mobile */}
+      <div className="page-indicator-mobile">
+        {Array.from({ length: 12 }, (_, i) => (
+          <div
+            key={i}
+            className={`page-dot ${i === scene ? 'active' : ''}`}
+            aria-hidden="true"
+          />
+        ))}
+        <span className="page-number">{scene + 1}/12</span>
+      </div>
+
+      {/* Swipe Gesture Hint - Fades after 5s or first swipe */}
+      {scene === 0 && (
+        <div className="swipe-hint" style={{ opacity: scene > 0 ? 0 : 1 }}>
+          <div className="finger-icon" />
+          <span className="swipe-text">Swipe</span>
+        </div>
+      )}
 
       {/* Quick Jump Constellation Drawer Modal */}
       <AnimatePresence>
